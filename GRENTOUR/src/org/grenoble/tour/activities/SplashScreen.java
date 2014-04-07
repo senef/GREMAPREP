@@ -14,6 +14,9 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 
 public class SplashScreen extends Activity {
 
@@ -23,11 +26,54 @@ public class SplashScreen extends Activity {
 		setContentView(R.layout.activity_splash_screen);
 
 		// lancement du splashscreen: voir dans res/anim
+
+		// Animation animation;
+
+		Animation animation = AnimationUtils.loadAnimation(this, R.anim.move);
+		ImageView v = (ImageView) this.findViewById(R.id.splash);
+		animation.setDuration(5000);
+		v.startAnimation(animation);
+		/*
+		 * animation.setAnimationListener(new AnimationListener() { public void onAnimationEnd(Animation _animation) {
+		 * // Que faire quand l'animation se termine ? (n'est pas lancé à la fin d'une répétition) } public void
+		 * onAnimationRepeat(Animation _animation) { // Que faire quand l'animation se répète ? } public void
+		 * onAnimationStart(Animation _animation) { // Que faire au premier lancement de l'animation ? } });
+		 */
+
 		// preparation des éléments (carte,etc..) pendant ce temps
 		// utiliser des Threads pour des tâches parallèles, ca ira plus vite!
 
-		Intent i = new Intent(this, MapViewer.class);
-		this.startActivity(i);
+		Thread logoTimer = new Thread() {
+			public void run() {
+				try {
+					int logoTimer = 0;
+					while (logoTimer < 5000) {
+						sleep(100);
+						logoTimer = logoTimer + 100;
+					};
+
+					Intent i = new Intent(SplashScreen.this, MapViewer.class);
+					startActivity(i);
+
+				}
+
+				catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+
+				finally {
+					finish();
+				}
+			}
+		};
+
+		logoTimer.start();
+
+		/****************************************************/
+		// lancement du splashscreen: voir dans res/anim
+		// preparation des éléments (carte,etc..) pendant ce temps
+		// utiliser des Threads pour des tâches parallèles, ca ira plus vite!
+
 	}
 
 	@Override

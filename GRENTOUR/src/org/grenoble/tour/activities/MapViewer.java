@@ -158,6 +158,7 @@ public class MapViewer extends MapActivity {
 			finish();
 		}
 		setContentView(mapView);
+
 		setUp_PointsOfInterest();
 		try {
 			setUp_Ways();
