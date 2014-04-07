@@ -3,16 +3,19 @@
 	package="org.mapsforge.applications.android.samples" android:versionCode="8" android:versionName="0.3.1-SNAPSHOT">
 
 	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="19" />
 
-	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="17" />
-
-	<application android:allowBackup="true" android:label="Samples">
-		<activity android:name=".MapViewer" android:label="MapViewer">
+	<application android:allowBackup="true" android:label="GrenobleTour">
+		<activity android:name="org.grenoble.tour.activities.MapViewer" android:label="map">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-	
+		<activity android:name="org.grenoble.tour.activities.SplashScreen" android:label="splash" />
+		<activity android:name="org.grenoble.tour.activities.Settings" android:label="settings" />
+		<activity android:name="org.grenoble.tour.activities.WebViewActivity" android:label="web" />
 	</application>
 </manifest>
