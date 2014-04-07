@@ -5,7 +5,10 @@ package org.grenoble.tour.beans;
 
 import org.mapsforge.core.model.GeoPoint;
 
-public class Poi {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Poi implements Parcelable {
 	private String id;
 	private double lat;
 	private double lon;
@@ -54,5 +57,17 @@ public class Poi {
 
 	public GeoPoint getNewPoint() {
 		return new GeoPoint(lat, lon);
+	}
+
+	@Override
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel arg0, int arg1) {
+		// TODO Auto-generated method stub
+
 	}
 }

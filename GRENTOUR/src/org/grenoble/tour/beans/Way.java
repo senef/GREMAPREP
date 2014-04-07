@@ -24,12 +24,14 @@ import java.util.List;
 import org.grenoble.tour.provider.POIRetriever;
 import org.mapsforge.core.model.GeoPoint;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 /**
  * @author falou
  */
-public class Way {
+public class Way implements Parcelable {
 	// private String id;
 	private static final String TAG = "way";
 
@@ -85,6 +87,18 @@ public class Way {
 
 	public void addRef(String s) {
 		this.references.add(s);
+	}
+
+	@Override
+	public int describeContents() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flags) {
+		// TODO Auto-generated method stub
+
 	}
 
 }
