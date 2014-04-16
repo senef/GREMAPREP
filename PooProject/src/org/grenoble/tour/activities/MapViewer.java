@@ -15,7 +15,10 @@
 package org.grenoble.tour.activities;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +38,7 @@ import org.mapsforge.map.reader.header.FileOpenResult;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
@@ -119,6 +123,7 @@ public class MapViewer extends MapActivity implements OnClickListener, OnTouchLi
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		installMapIntoSD();
 		// pour débogage
 		String sfile = Environment.getExternalStorageDirectory().getPath();
 		Log.d("MAPFILE", sfile);
@@ -353,5 +358,46 @@ public class MapViewer extends MapActivity implements OnClickListener, OnTouchLi
 	public boolean onTouch(View v, MotionEvent event) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public void installMapIntoSD() {
+		AssetManager assetManager = getAssets();
+		String[] files = null;
+		try {
+			files = assetManager.list("Files");
+		} catch (IOException e) {
+			Log.e("tag", e.getMessage());
+		}
+
+		for (String filename : files) {
+			System.out.println("File name => " + filename);
+			InputStream in = null;
+			OutputStream out = null;
+			System.out.println(filename);
+			try {
+				in = assetManager.open("Files/" + filename); // if files resides inside the "Files" directory itself
+				out = new FileOutputStream(Environment.getExternalStorageDirectory().getPath() + "/" + filename);
+				copyFile(in, out);
+				in.close();
+				in = null;
+				out.flush();
+				out.close();
+				out = null;
+			} catch (Exception e) {
+				Log.e("tag", e.getMessage());
+			}
+		}
+	}
+
+	public void removeFromApp() {
+
+	}
+
+	private void copyFile(InputStream in, OutputStream out) throws IOException {
+		byte[] buffer = new byte[1024];
+		int read;
+		while ((read = in.read(buffer)) != -1) {
+			out.write(buffer, 0, read);
+		}
 	}
 }
