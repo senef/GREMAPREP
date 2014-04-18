@@ -25,8 +25,8 @@ import java.util.List;
 import org.grenoble.tour.beans.Poi;
 import org.grenoble.tour.beans.Way;
 import org.grenoble.tour.provider.POIRetriever;
+import org.grenoble.tour.views.MapView;
 import org.mapsforge.android.maps.MapActivity;
-import org.mapsforge.android.maps.MapView;
 import org.mapsforge.android.maps.overlay.ListOverlay;
 import org.mapsforge.android.maps.overlay.Marker;
 import org.mapsforge.android.maps.overlay.OverlayItem;
@@ -42,7 +42,6 @@ import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -51,23 +50,12 @@ import android.os.Environment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.widget.Toast;
 
-/**
- * A simple application which demonstrates how to use a MapView.
- */
-public class MapViewer extends MapActivity implements OnClickListener, OnTouchListener {
+public class MapViewer extends MapActivity {
 	private static final File MAP_FILE = new File(Environment.getExternalStorageDirectory().getPath(),
 			"rhone-alpes.map");
-	private List<Marker> markers;
-	//
-
-	//
-	public static MapView mapView;
+	MapView mapView;
 	// my place
 	private Marker myPlace;
 	//
@@ -75,82 +63,50 @@ public class MapViewer extends MapActivity implements OnClickListener, OnTouchLi
 	//
 	private ListOverlay listOverlay = new ListOverlay();
 
-	public GeoPoint getPosition() {
-		Location l = this.locationManager.getLastKnownLocation("network");
-		return new GeoPoint(l.getLatitude(), l.getLongitude());
-
-	}
-
-	public void itineraire(GeoPoint gp) throws IOException {
-		ListOverlay listOverlay = new ListOverlay();
-		List<OverlayItem> overlayItems = listOverlay.getOverlayItems();
-		ArrayList<Way> listWay = new ArrayList<Way>();
-		try {
-			// retrieving Ways from POI.osm file
-			listWay.addAll(POIRetriever.parseWays(this.getAssets().open("POI.osm")));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		Log.i("op", "taille: " + listWay.size());
-		for (Way w : listWay.subList(1, 17)) {
-			w.setNodes(this.getAssets().open("POI.osm"));
-			Log.i("op", "tt: " + w.toString());
-		}
-
-		for (Way w : listWay.subList(1, 8)) {
-			w.setNodes(this.getAssets().open("POI.osm"));
-		}
-
-		Way w = getWay(listWay.subList(1, 8), gp, new GeoPoint(45.1926841, 5.7329916));
-		Log.i("opi", w.toString());
-		Polyline polyline = createPolyline(this, w.getNoeuds());
-		Toast.makeText(this, "lat=" + w.getNoeuds().get(0).latitude, Toast.LENGTH_LONG);
-		overlayItems.add(polyline);
-		mapView.getOverlays().add(listOverlay);
-
-	}
-
-	private Way getWay(List<Way> listWay, GeoPoint gp, GeoPoint gp2) {
-		for (Way w : listWay) {
-			if (w.getNoeuds().contains(gp) && w.getNoeuds().contains(gp2)) {
-				return w;
-			};
-
-		}
-		return null;
-	}
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		installMapIntoSD();
+
 		// pour débogage
 		String sfile = Environment.getExternalStorageDirectory().getPath();
 		Log.d("MAPFILE", sfile);
-		this.markers = new ArrayList();
 		// Location management
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		// //
-		// Intent intent = new Intent(this, GPSUpdateReceiver.class);
-		// PendingIntent pending = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-		// String provi = "network";
-		// locationManager.requestLocationUpdates(provi, 60000, 150, pending);
-		//
 		updateLocation(locationManager);
-
-		// ---------afficher le map---------
-		this.mapView = new MapView(this);
-
-		this.mapView.setClickable(true);
-		this.mapView.setBuiltInZoomControls(true);
+		mapView = new MapView(this);
+		mapView.setClickable(true);
+		mapView.setBuiltInZoomControls(true);
 		FileOpenResult fileOpenResult = this.mapView.setMapFile(MAP_FILE);
 		if (!fileOpenResult.isSuccess()) {
 			Toast.makeText(this, fileOpenResult.getErrorMessage(), Toast.LENGTH_LONG).show();
 			finish();
 		}
+		this.mapView.showUserMarker(true);
 		setContentView(mapView);
 
 		setUp_PointsOfInterest();
+
+	}
+
+	// met les POI sur la map
+	public void setUp_PointsOfInterest() {
+		// -----remplir listPoi
+		ArrayList<Poi> listPoi = new ArrayList<Poi>();
+		try {
+			// retrieving POI from POI.osm file
+			listPoi.addAll(POIRetriever.parsebis(this.getAssets().open("POI.osm")));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// // ---------ajouter des marqueur---------
+
+		ListOverlay listOverlay = new ListOverlay();
+		Marker mark;
+		for (Poi p : listPoi.subList(1, 18)) {
+			mark = this.mapView.createMarker(R.drawable.marker_green, p.getNewPoint());
+			this.mapView.addMarker(mark);
+		}
 
 	}
 
@@ -192,53 +148,17 @@ public class MapViewer extends MapActivity implements OnClickListener, OnTouchLi
 					// add marker
 					List<OverlayItem> overlayItems = listOverlay.getOverlayItems();
 					overlayItems.remove(myPlace);
-					myPlace = createMarker(R.drawable.marker_red, point);
+					myPlace = mapView.createMarker(R.drawable.marker_red, point);
 					overlayItems.add(myPlace);
 					// MapViewer.mapView.getOverlays().clear();
-					MapViewer.mapView.getOverlays().add(listOverlay);
-					MapViewer.mapView.getMapViewPosition().setCenter(point);
+					mapView.getOverlays().add(listOverlay);
+					mapView.getMapViewPosition().setCenter(point);
 				}
 
 			}
 		};
 		// demander localisation
 		locationManager.requestLocationUpdates(provi, 60000, 150, lis);
-
-	}
-
-	/**
-	 * @param resourceIdentifier
-	 * @param geoPoint
-	 * @return
-	 */
-	public Marker createMarker(int resourceIdentifier, GeoPoint geoPoint) {
-		Drawable drawable = getResources().getDrawable(resourceIdentifier);
-		return new Marker(geoPoint, Marker.boundCenterBottom(drawable));
-	}
-
-	// met les POI sur la map
-	public void setUp_PointsOfInterest() {
-		// -----remplir listPoi
-		ArrayList<Poi> listPoi = new ArrayList<Poi>();
-		try {
-			// retrieving POI from POI.osm file
-			listPoi.addAll(POIRetriever.parsebis(this.getAssets().open("POI.osm")));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		// // ---------ajouter des marqueur---------
-
-		ListOverlay listOverlay = new ListOverlay();
-		List<OverlayItem> overlayItems = listOverlay.getOverlayItems();
-
-		Marker mark;
-		for (Poi p : listPoi.subList(1, 18)) {
-			mark = createMarker(R.drawable.marker_green, p.getNewPoint());
-			this.markers.add(mark);
-			overlayItems.add(mark);
-		}
-		mapView.getOverlays().add(listOverlay);
 
 	}
 
@@ -299,65 +219,13 @@ public class MapViewer extends MapActivity implements OnClickListener, OnTouchLi
 			Intent intent = new Intent(this, Settings.class);
 			startActivity(intent);
 		} else if (item.getTitle().equals("Itineraire")) {
-			try {
-				itineraire(new GeoPoint(45.1915163, 5.7391523));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			Toast.makeText(this, "not done", Toast.LENGTH_SHORT);
 		} else {
 			Intent intent = new Intent(this, PoisActivity.class);
 			startActivity(intent);
 		}
 
 		return true;
-	}
-
-	@Override
-	public boolean onTouchEvent(MotionEvent e) {
-		Marker m = getIndexOfTouched(e);
-		Toast.makeText(this, "value = " + m.toString(), Toast.LENGTH_LONG);
-		Log.i("tagu", m.toString());
-		return true;
-
-	}
-
-	public Marker getIndexOfTouched(MotionEvent event) {
-		int i = 0;
-		ArrayList<Poi> listPoi = new ArrayList<Poi>();
-		try {
-			// retrieving POI from POI.osm file
-			listPoi.addAll(POIRetriever.parsebis(this.getAssets().open("POI.osm")));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		int width = this.getResources().getDrawable(R.drawable.marker_green).getIntrinsicWidth();
-		int height = this.getResources().getDrawable(R.drawable.marker_green).getIntrinsicHeight();
-
-		for (Marker marker : markers) {
-			int left = marker.getPixelX() - width / 2;
-			int top = marker.getPixelY() - height / 2;
-
-			if ((event.getX(0) >= left) && (event.getY(0) >= top) && (event.getX(0) <= left + width)
-					&& (event.getY(0) <= top + height)) {
-				return marker;
-			}
-		}
-		return null;
-
-	}
-
-	@Override
-	public void onClick(View arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public boolean onTouch(View v, MotionEvent event) {
-		// TODO Auto-generated method stub
-		return false;
 	}
 
 	public void installMapIntoSD() {
@@ -400,4 +268,5 @@ public class MapViewer extends MapActivity implements OnClickListener, OnTouchLi
 			out.write(buffer, 0, read);
 		}
 	}
+
 }
