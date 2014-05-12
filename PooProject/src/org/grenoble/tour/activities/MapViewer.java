@@ -19,10 +19,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.genoble.tour.services.GPSTracker;
 import org.grenoble.tour.beans.Poi;
 import org.grenoble.tour.beans.Way;
 import org.grenoble.tour.provider.POIRetriever;
+import org.grenoble.tour.services.GPSTracker;
 import org.grenoble.tour.views.Boussole;
 import org.grenoble.tour.views.MapView;
 import org.grenoble.tour.views.Marker;
@@ -78,6 +78,7 @@ public class MapViewer extends MapActivity implements SensorEventListener {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
 		// Location management
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		updateLocation(locationManager);
@@ -123,10 +124,13 @@ public class MapViewer extends MapActivity implements SensorEventListener {
 		ListOverlay listOverlay = new ListOverlay();
 		Marker mark;
 		Point point = new Point();
-		/*
-		 * List<GeoPoint> lgp = new ArrayList<GeoPoint>(); for (Poi p : listPoi) { lgp.add(p.getNewPoint()); }
-		 * //this.mapView.addRoute(1, lgp, Color.RED, 18);
-		 */
+
+		List<GeoPoint> lgp = new ArrayList<GeoPoint>();
+		for (Poi p : pois) {
+			lgp.add(p.getNewPoint());
+		}
+		this.mapView.addRoute(1, lgp, Color.RED, 18);
+
 		for (Poi p : pois) {
 			mark = this.mapView.createMarker(R.drawable.marker_blue, p.getNewPoint(), p.getName(), p.getDesc());
 			mark.setId(Integer.parseInt(p.getId()));

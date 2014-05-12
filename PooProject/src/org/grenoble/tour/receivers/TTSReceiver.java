@@ -14,7 +14,7 @@
  */
 package org.grenoble.tour.receivers;
 
-import org.genoble.tour.services.TTSService;
+import org.grenoble.tour.services.TTSService;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

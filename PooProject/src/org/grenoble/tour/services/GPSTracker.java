@@ -1,4 +1,4 @@
-package org.genoble.tour.services;
+package org.grenoble.tour.services;
 
 import android.app.AlertDialog;
 import android.app.Service;

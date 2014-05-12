@@ -33,6 +33,7 @@ public class SplashScreen extends Activity {
 		ImageView v = (ImageView) this.findViewById(R.id.splash);
 		animation.setDuration(5000);
 		v.startAnimation(animation);
+
 		/*
 		 * animation.setAnimationListener(new AnimationListener() { public void onAnimationEnd(Animation _animation) {
 		 * // Que faire quand l'animation se termine ? (n'est pas lancé à la fin d'une répétition) } public void

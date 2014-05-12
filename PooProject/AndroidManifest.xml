@@ -10,7 +10,7 @@
 	<application android:allowBackup="true" android:label="GrenobleTour" android:icon="@drawable/icon">
 	    
 	    <activity
-            android:name="org.grenoble.tour.activities.ActivityMain"
+            android:name="org.grenoble.tour.activities.SplashScreen"
             android:screenOrientation="portrait"
             android:label="@string/app_name" >
             <intent-filter>
@@ -20,18 +20,18 @@
             </intent-filter>
         </activity>
         
-        <activity android:name="org.grenoble.tour.activities.POISActivity" android:label="Grentour"/>
-		<activity android:name="org.grenoble.tour.activities.MainActivity" android:label="Grentour"/>
-				<activity android:name="org.grenoble.tour.activities.SplashScreen" android:label="Splaschscreen" />
-		<activity android:name="org.grenoble.tour.activities.MapViewer" android:label="Grentour" />
+        <activity android:name="org.grenoble.tour.activities.POISActivity" android:label="Points of interest"/>
+				<activity android:name="org.grenoble.tour.activities.MapViewer" android:label="MapViewer" />
+		<activity android:name="org.grenoble.tour.activities.ActivityMain" android:label="Main" />
 		<activity android:name="org.grenoble.tour.activities.Settings" android:label="Settings" />
 		<activity android:name="org.grenoble.tour.activities.WebViewActivity" android:label="Web" />
 		<activity android:name="org.grenoble.tour.views.Boussole" android:theme="@style/FullHeightDialog"
-		    android:label="Points of interest" />		
+		    android:label="Compas" />		
 		<service
             android:name="org.grenoble.tour.services.TTSService"
              >
         </service>    
+        <service android:name="org.grenoble.tour.services.GPSTracker"/> 
 		<receiver android:name="org.grenoble.tour.receivers.TTSReceiver">
           <intent-filter>
           <action android:name="org.grenoble.intent.action.TTSDialog">
