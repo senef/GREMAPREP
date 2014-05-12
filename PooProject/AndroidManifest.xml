@@ -7,20 +7,36 @@
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="19" />
 
-	<application android:allowBackup="true" android:label="GrenobleTour">
-		<activity android:name="org.grenoble.tour.activities.MainActivity" android:label="Grentour">
-			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
-				<category android:name="android.intent.category.LAUNCHER" />
-			</intent-filter>
-		</activity>
+	<application android:allowBackup="true" android:label="GrenobleTour" android:icon="@drawable/icon">
+	    
+	    <activity
+            android:name="org.grenoble.tour.activities.ActivityMain"
+            android:screenOrientation="portrait"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name="org.grenoble.tour.activities.POISActivity" android:label="Grentour"/>
+		<activity android:name="org.grenoble.tour.activities.MainActivity" android:label="Grentour"/>
 				<activity android:name="org.grenoble.tour.activities.SplashScreen" android:label="Splaschscreen" />
-		
 		<activity android:name="org.grenoble.tour.activities.MapViewer" android:label="Grentour" />
 		<activity android:name="org.grenoble.tour.activities.Settings" android:label="Settings" />
 		<activity android:name="org.grenoble.tour.activities.WebViewActivity" android:label="Web" />
-		<activity android:name="org.grenoble.tour.activities.PoisActivity" android:label="Points of interest" />
-		
-		
+		<activity android:name="org.grenoble.tour.views.Boussole" android:theme="@style/FullHeightDialog"
+		    android:label="Points of interest" />		
+		<service
+            android:name="org.grenoble.tour.services.TTSService"
+             >
+        </service>    
+		<receiver android:name="org.grenoble.tour.receivers.TTSReceiver">
+          <intent-filter>
+          <action android:name="org.grenoble.intent.action.TTSDialog">
+          </action>
+          </intent-filter>
+      </receiver>
 	</application>
 </manifest>

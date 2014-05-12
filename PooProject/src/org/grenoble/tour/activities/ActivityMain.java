@@ -11,7 +11,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
-public class MainActivity extends Activity {
+public class ActivityMain extends Activity {
 
 	private Button createButton(final Class<?> clazz) {
 		final Button button = new Button(this);
@@ -35,7 +35,6 @@ public class MainActivity extends Activity {
 		LinearLayout linearLayout = (LinearLayout) findViewById(R.id.samples);
 		linearLayout.addView(createButton(SplashScreen.class));
 		linearLayout.addView(createButton(MapViewer.class));
-		linearLayout.addView(createButton2(WebViewActivity.class));
 		linearLayout.addView(createButton(Settings.class));
 
 	}
@@ -46,8 +45,8 @@ public class MainActivity extends Activity {
 		button.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View view) {
-				Intent intent = new Intent(button.getContext(), WebViewActivity.class);
-				intent.putExtra("url", "notreDame.html");
+				Intent intent = new Intent(button.getContext(), clazz);
+				intent.putExtra("url", "test.html");
 				startActivity(intent);
 			}
 		});

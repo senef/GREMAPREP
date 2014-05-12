@@ -32,7 +32,7 @@ public class Poi implements Parcelable {
 	 *            the name to set
 	 */
 	public void setName(String name) {
-		this.name = name;
+		this.name = " " + name + " ";
 	}
 
 	/**

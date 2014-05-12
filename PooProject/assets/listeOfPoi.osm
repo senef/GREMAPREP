@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version='0.6' upload='true' generator='JOSM'>
+
+  <node id='1246' action='modify' visible='true' lat='45.15699951061053' lon='5.704507021244039'>
+     <name>Place du Parlement du Dauphiné</name>
+	<picture>img/1246.png</picture>
+	<description>Le Parlement du Dauphine ou Parlement de Grenoble, est une cour souveraine de justice sous l'Ancien Regime français.
+Il est cree le 29 juillet 14531 par le dauphin Louis II.</description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>
+  <node id='1232' action='modify' visible='true' lat='45.157744299961294' lon='5.704446086848405'>
+     <name>Remparts du Cularo</name>
+	<picture>img/1232.png</picture>
+	<description>Autrefois Grenoble s’appelait Cularo. Les gens avaient construit des remparts au IIIe siecle pour se protéger des envahisseurs.
+Il y avait 39 tours et les murs faisaient 3m d’epaisseur et 5m de haut. </description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>
+  <node id='1183' action='modify' visible='true' lat='45.15973513139686' lon='5.702374317396889'>
+    <name>Immeuble en S</name>
+<picture>img/1183.png</picture>
+	<description>L’Île-Verte est un quartier de Grenoble, situé dans un méandre de l'Isère.
+Ce quartier est un des plus peuplés de la ville, du fait de ses grands immeubles (les trois tours, mais aussi l'immeuble en « S »).</description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>   
+  <node id='1106' action='modify' visible='true' lat='45.15762971761789' lon='5.696057451716286'>
+     <name>Bastille-Grenoble</name>
+<picture>img/1106.png</picture>
+	<description>La Bastille est un fort militaire du xixe siècle culminant à 476 mètres d'altitude1 sur les derniers contreforts du massif de la Chartreuse, et dominant de 264 mètres la ville de Grenoble.
+Accessible en téléphérique, à pieds ou en voiture, la Bastille, qui donne aussi son nom à la colline, est le premier site touristique de l'agglomération grenobloise avec 600000 visiteurs par an
+</description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>
+  <node id='1092' action='modify' visible='true' lat='45.164246470385415' lon='5.695935582925022'>
+     <name>Gare SNCF</name>
+	<picture>img/1092.png</picture>
+	<description>La gare de Grenoble est une gare ferroviaire française située sur la commune de Grenoble dans le département de l'Isère en région Rhône-Alpes.
+En tout, l'agglomération grenobloise compte sept autres gares, celles d'Échirolles, de Grenoble-Universités-Gières, de Jarrie-Vizille, de Pont-de-Claix, de Saint-Égrève-Saint-Robert, de Saint-Georges-de-Commiers et de Vif.</description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>
+  <node id='1085' action='modify' visible='true' lat='45.1604942070798' lon='5.7036945626356'>
+     <name>Parc Paul Mistral</name>
+	<picture>img/1085.png</picture>
+<description>Le parc Paul-Mistral est un parc urbain de 27 hectares1 (environ 800m x 350m) d'un seul tenant, situé à Grenoble, renfermant plusieurs équipements sportifs majeurs, ainsi que l'hôtel de ville. Situé sur un ancien terrain militaire du Génie, le site va prendre sa configuration actuelle grâce au déroulement de l'exposition internationale de la houille blanche de 1925.</description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>
+  <node id='1078' action='modify' visible='true' lat='45.158159659024655' lon='5.697093336442044'>
+    <name>Tour de l'Isle</name>
+<picture>img/1078.png</picture>
+	<description>Elevee entre 1381 et 1418 par les consuls de la ville, la tour de l'Isle, imposante avec ses trente metres de hauteur, plongeait à l'origine directement dans l'Isere et renforçait la muraille du faubourg du même nom. </description>
+	<tag k='trigger' v='30' />
+	<tag k='wiki' v='http://en.wikipedia.org/wiki/le_nom_du_fichier' />
+  </node>
+</osm>

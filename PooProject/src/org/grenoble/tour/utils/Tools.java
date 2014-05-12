@@ -14,6 +14,54 @@
  */
 package org.grenoble.tour.utils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import android.content.res.AssetManager;
+import android.util.Log;
+
 public class Tools {
+	public void installMapIntoSD() {
+		AssetManager assetManager = null;
+		String[] files = null;
+		try {
+			files = assetManager.list("Files");
+		} catch (IOException e) {
+			Log.e("tag", e.getMessage());
+		}
+
+		for (String filename : files) {
+			System.out.println("File name => " + filename);
+			InputStream in = null;
+			OutputStream out = null;
+			System.out.println(filename);
+			try {
+				in = assetManager.open("Files/" + filename); // if files resides inside the "Files" directory itself
+				out = null;// new FileOutputStream(Environment.getExternalStorageDirectory().getPath() + "/" +
+							// filename);
+				copyFile(in, out);
+				in.close();
+				in = null;
+				out.flush();
+				out.close();
+				out = null;
+			} catch (Exception e) {
+				Log.e("tag", e.getMessage());
+			}
+		}
+	}
+
+	public void removeFromApp() {
+
+	}
+
+	private void copyFile(InputStream in, OutputStream out) throws IOException {
+		byte[] buffer = new byte[1024];
+		int read;
+		while ((read = in.read(buffer)) != -1) {
+			out.write(buffer, 0, read);
+		}
+	}
 
 }

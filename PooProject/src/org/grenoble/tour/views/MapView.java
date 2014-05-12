@@ -7,38 +7,55 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
+import org.grenoble.tour.activities.WebViewActivity;
 import org.grenoble.tour.overlays.MarkerImplementor;
 import org.grenoble.tour.overlays.OnMarkerClickListener;
+import org.grenoble.tour.receivers.TTSReceiver;
 import org.mapsforge.android.maps.overlay.Circle;
 import org.mapsforge.android.maps.overlay.ListOverlay;
-import org.mapsforge.android.maps.overlay.Marker;
 import org.mapsforge.android.maps.overlay.OverlayItem;
 import org.mapsforge.android.maps.overlay.PolygonalChain;
 import org.mapsforge.android.maps.overlay.Polyline;
 import org.mapsforge.applications.android.samples.R;
 import org.mapsforge.core.model.GeoPoint;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
+import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.speech.tts.TextToSpeech;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.view.View;
+import android.view.animation.TranslateAnimation;
+import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * This class extends mapsforge MapView and adds support for user overlay, location and heading updates. A MapView
  * object must be initialized with a context object.
  */
-public class MapView extends org.mapsforge.android.maps.MapView {
+
+public class MapView extends org.mapsforge.android.maps.MapView implements TextToSpeech.OnInitListener {
 
 	// ================================================================================
 	// Members
 	// ================================================================================
+
+	// context
+	private static Context ctx;
 
 	// Entities
 	private Marker mUserMarker; // User marker
@@ -47,7 +64,10 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 	private boolean mShowUserMarker; // Show user marker. Default : false
 	private boolean mShowLocationAccuracy; // Show user accuracy with a blue circle. Default : false
 	private boolean mIsTraceEnabled; // When true trace is displayed. Default : false
-	private List<Marker> mMarkers; // All markers used for POI
+	public List<Marker> mMarkers; // All markers used for POI
+	private List<Marker> visibleBubbles;
+	private List<Marker> hiddenBubbles;
+	private boolean bubbleShown;
 
 	// Drawing
 	private Polyline mTrace; // User trace
@@ -56,8 +76,12 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 	private ListOverlay mTraceOverlays; // Trace overlays of the map
 	private Circle mAccuracyCircle; // Overlay showing location accuracy
 	private SparseArray<Polyline> mRouteMap; // Map associating route id with a polyline.
-	private OnMarkerClickListener onMarkerClickListener;
-	LinearLayout bubble;
+	public OnMarkerClickListener onMarkerClickListener;
+
+	// text to speech
+	private static String TTSDialog = "org.grenoble.intent.action.TTSDialog";
+	private TextToSpeech tts;
+	private Button btnSpeak;
 
 	// ================================================================================
 	// Constructor
@@ -73,6 +97,21 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 	}
 
 	/**
+	 * @return the mMarkerOverlays
+	 */
+	public ListOverlay getmMarkerOverlays() {
+		return mMarkerOverlays;
+	}
+
+	/**
+	 * @param mMarkerOverlays
+	 *            the mMarkerOverlays to set
+	 */
+	public void setmMarkerOverlays(ListOverlay mMarkerOverlays) {
+		this.mMarkerOverlays = mMarkerOverlays;
+	}
+
+	/**
 	 * Inits map view with content
 	 * 
 	 * @param context
@@ -80,6 +119,8 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 	 */
 	public MapView(Context context, AttributeSet attributeSet) {
 		super(context, attributeSet);
+		this.ctx = context;
+		setThemeFromAssets("assets.xml");
 
 		// Init list overlay
 		mMarkerOverlays = new ListOverlay();
@@ -106,12 +147,15 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 		mAccuracyCircle = createAccuracyCircle();
 
 		// Create marker
-		mUserMarker = createMarker(R.drawable.poi, new GeoPoint(0, 0));
+		mUserMarker = createMarker(R.drawable.marker_red, new GeoPoint(0, 0), "Votre Position", "position courante");
 
 		// Create POI list
 		mMarkers = new ArrayList<Marker>();
+		this.visibleBubbles = new ArrayList<Marker>();
 		this.onMarkerClickListener = new MarkerImplementor();
 		this.setOnMarkerClickListener(onMarkerClickListener);
+		bubbleShown = false;
+		setTts(new TextToSpeech(this.getContext(), this));
 
 	}
 
@@ -330,7 +374,7 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 	public void setUserOrientation(double orientation) {
 
 		// Updates marker if not null
-		mUserMarker.setOrientation(orientation);
+		// mUserMarker.setOrientation(orientation);
 
 		// Refresh
 		myRedraw();
@@ -409,9 +453,14 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 	// Internal
 	// ================================================================================
 
-	public Marker createMarker(int resourceIdentifier, GeoPoint geoPoint) {
+	public Marker createMarker(int resourceIdentifier, GeoPoint geoPoint, String string, String desc) {
 		Drawable drawable = getResources().getDrawable(resourceIdentifier);
-		return new Marker(geoPoint, Marker.boundCenter(drawable));
+		return new Marker(this.getContext(), geoPoint, Marker.boundCenter(drawable), string, desc);
+	}
+
+	public MarkerBubble createMarkerbis(Drawable drawable, Drawable b, GeoPoint geoPoint, String string) {
+		return new MarkerBubble(this.getContext(), geoPoint, MarkerBubble.boundCenter(drawable),
+				MarkerBubble.boundCenter(b), string);
 	}
 
 	private Circle createAccuracyCircle() {
@@ -505,46 +554,188 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 
 	}
 
+	public void addBubble(Marker marker) {
+
+		mMarkerOverlays.getOverlayItems().add(marker);
+
+	}
+
 	/**
 	 * Remove marker from the map
 	 * 
 	 * @param marker
 	 */
 	public void removeMarker(Marker marker) {
+
 		mMarkerOverlays.getOverlayItems().remove(marker);
 		mMarkers.remove(marker);
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+
 		super.onTouchEvent(event);
 
+		int width, height, left, top;
+
 		if (onMarkerClickListener == null) {
-			Log.i("toucht", "thr!");
 			return true;
 		}
-
 		if (event.getAction() != MotionEvent.ACTION_DOWN) {
 			return true;
 		}
 
-		int width, height, left, top;
-
+		this.hiddenBubbles = new ArrayList<Marker>();
+		this.hiddenBubbles = this.visibleBubbles;
+		this.visibleBubbles = new ArrayList<Marker>();
+		// if (event.getAction() != MotionEvent.ACTION_MOVE && event.getPointerCount() == 1)
 		for (Marker marker : mMarkers) {
+			if (!this.bubbleShown) {
+				width = marker.getDrawable().getIntrinsicWidth();
+				height = marker.getDrawable().getIntrinsicHeight();
+				Point p = this.getProjection().toPixels(marker.getGeoPoint(), null);
+				left = p.x - width / 2;
+				top = p.y - height / 2;
+				if ((event.getX(0) >= left) && (event.getY(0) >= top) && (event.getX(0) <= left + width)
+						&& (event.getY(0) <= top + height)) {
 
-			width = marker.getDrawable().getIntrinsicWidth();
-			height = marker.getDrawable().getIntrinsicHeight();
+					this.visibleBubbles.add(createMarkerbis(this.getResources().getDrawable(R.drawable.marker_red),
+							this.toDrawable(marker.getName()),
+							new GeoPoint(marker.getGeoPoint().latitude, marker.getGeoPoint().longitude),
+							marker.getName()));
+					TranslateAnimation translateAnim = new TranslateAnimation(200, 1000, 2000, 1000);
+					// Use (0, 0, 200, 0 ) if you would like to animate this in a mobile device rather than a tab
 
-			left = marker.getPixelX() - width / 2;
-			top = marker.getPixelY() - height / 2;
+					translateAnim.setDuration(500);
+					translateAnim.setFillBefore(true);
 
-			if ((event.getX(0) >= left) && (event.getY(0) >= top) && (event.getX(0) <= left + width)
-					&& (event.getY(0) <= top + height)) {
-				onMarkerClickListener.onMarkerClick(marker, this.getContext(), this);
+					marker.setAnimation(translateAnim);
+					marker.startAnimation(translateAnim);
+					this.myRedraw();
+					Canvas c = new Canvas();
+					Paint paint = new Paint();
+					paint.setColor(Color.parseColor("#CD5C5C"));
+					c.drawRect(50, 50, 200, 200, paint);
+					// this.getLayoutAnimation().
+					// c.drawColor(Color.RED);
+					// this.myRedraw();
+					// onMarkerClickListener.onMarkerClick(marker, this.getContext(), this);
+
+				}
+			} else {
+				width = toDrawable(marker.getName()).getIntrinsicWidth();
+				height = toDrawable(marker.getName()).getIntrinsicHeight();
+				Point p = this.getProjection().toPixels(marker.getGeoPoint(), null);
+				p = this.getProjection().toPixels(marker.getGeoPoint(), null);
+				p = this.getProjection().toPixels(marker.getGeoPoint(), null);
+				left = p.x - width / 2;
+				top = p.y - height / 2;
+				if ((event.getX(0) >= left + width / 2 + width / 4) && (event.getY(0) >= top - height)
+						&& (event.getX(0) <= left + width) && (event.getY(0) <= top)) {
+
+					LayoutInflater factory = LayoutInflater.from(this.getContext());
+					final View alertDialogView = factory.inflate(R.layout.dialog_poi, null);
+					TextView tName = (TextView) alertDialogView.findViewById(R.id.textView_poiname);
+					TextView tLat = (TextView) alertDialogView.findViewById(R.id.textView_lat);
+					TextView tLon = (TextView) alertDialogView.findViewById(R.id.textView_lon);
+					tName.setText(marker.getName());
+					tLat.setText(" " + marker.getGeoPoint().latitude);
+					tLon.setText("" + marker.getGeoPoint().longitude);
+					Button bWebView = (Button) alertDialogView.findViewById(R.id.button_webview);
+					final Marker m = marker;
+					bWebView.setOnClickListener(new OnClickListener() {
+						@Override
+						public void onClick(View view) {
+							Intent intent = new Intent(getContext(), WebViewActivity.class);
+
+							intent.putExtra("url", "" + m.getId());
+							intent.putExtra("desc", "" + m.getDesc());
+
+							getContext().startActivity(intent);
+						}
+					});
+					final String txt = marker.getName() + ".dont la latitude est égale à "
+							+ marker.getGeoPoint().latitude + " et la longitude." + marker.getGeoPoint().longitude;
+					this.btnSpeak = (Button) alertDialogView.findViewById(R.id.button_tts);
+					btnSpeak.setOnClickListener(new OnClickListener() {
+						@Override
+						public void onClick(View view) {
+							speakOut(txt);
+						}
+					});
+
+					AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this.getContext());
+					alertDialogBuilder.setTitle(marker.getName());
+					alertDialogBuilder.setIcon(this.getContext().getResources().getDrawable(R.drawable.poi));
+					alertDialogBuilder.setView(alertDialogView);
+					alertDialogBuilder.setPositiveButton("Cancel", null);
+					alertDialogBuilder.show();
+				}
 			}
 		}
-
+		if (this.visibleBubbles.isEmpty()) {
+			hideBubbles();
+			this.bubbleShown = false;
+		} else {
+			showbubbles();
+			this.bubbleShown = true;
+		}
+		/*
+		 * Intent intent = new Intent(ctx, TTSReceiver.class); intent.setAction(TTSDialog); intent.putExtra("TTStxt",
+		 * "test"); ctx.sendBroadcast(intent);
+		 */
 		return true;
+	}
+
+	protected void sendTTS(String txt) {
+		ctx = this.getContext();
+		Intent intent = new Intent(ctx, TTSReceiver.class);
+		intent.setAction(TTSDialog);
+		// Bundle extras = new Bundle();
+		// extras.putString("TTSDialog", "test");
+		intent.putExtra("TTStxt", txt);
+		ctx.sendBroadcast(intent);
+
+	}
+
+	public void showbubbles() {
+		for (Marker m : this.visibleBubbles) {
+			this.addBubble(m);
+
+		}
+
+		this.myRedraw();
+	}
+
+	public void hideBubbles() {
+		if (!this.hiddenBubbles.isEmpty()) {
+			for (Marker m : hiddenBubbles) {
+				this.removeMarker(m);
+			}
+			this.myRedraw();
+		}
+	}
+
+	public Drawable toDrawable(String txt) {
+
+		TextView v = new TextView(this.getContext());
+		v.setText(txt);
+		Typeface font = Typeface.createFromAsset(this.getContext().getAssets(), "fonts/Walkway Black.ttf");
+		v.setTypeface(font);
+		v.setTextSize(15);
+		v.setTextColor(Color.WHITE);
+		v.setBackgroundDrawable(this.getResources().getDrawable(R.drawable.bub));
+		v.setDrawingCacheEnabled(true);
+
+		v.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+				MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+		v.layout(0, 0, v.getMeasuredWidth(), v.getMeasuredHeight());
+
+		v.buildDrawingCache(true);
+		Bitmap b = Bitmap.createBitmap(v.getDrawingCache());
+		v.setDrawingCacheEnabled(false); //
+
+		return new BitmapDrawable(getResources(), b);
 	}
 
 	public void setOnMarkerClickListener(OnMarkerClickListener onMarkerClickListener) {
@@ -556,47 +747,33 @@ public class MapView extends org.mapsforge.android.maps.MapView {
 		invalidateOnUiThread();
 	}
 
-	// ===========================================================
-	// Public Classes
-	// ===========================================================
+	@Override
+	public void onInit(int status) {
+		if (status == TextToSpeech.SUCCESS) {
 
-	public static class LayoutParams extends ViewGroup.LayoutParams {
-		public static final int MODE_MAP = 0;
-		public static final int MODE_VIEW = 1;
-		public static final int LEFT = 3;
-		public static final int RIGHT = 5;
-		public static final int TOP = 48;
-		public static final int BOTTOM = 80;
-		public static final int CENTER_HORIZONTAL = 1;
-		public static final int CENTER_VERTICAL = 16;
-		public static final int CENTER = 17;
-		public static final int TOP_LEFT = 51;
-		public static final int BOTTOM_CENTER = 81;
+			int result = getTts().setLanguage(Locale.FRANCE);
 
-		public int mode;
-		public GeoPoint point;
-		public int x;
-		public int y;
-		public int alignment;
+			if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+				Log.e("TTS", "language pas bon");
+			}
 
-		public LayoutParams(int width, int height, GeoPoint point, int alignment) {
-			super(width, height);
+		} else {
+			Log.e("TTS", "Init failed");
 		}
 
-		public LayoutParams(int width, int height, GeoPoint point, int x, int y, int alignment) {
-			super(width, height);
-		}
-
-		public LayoutParams(int width, int height, int x, int y, int alignment) {
-			super(width, height);
-		}
-
-		public LayoutParams(int width, int height) {
-			super(width, height);
-		}
-
-		public LayoutParams(ViewGroup.LayoutParams source) {
-			super(source);
-		}
 	}
+
+	private void speakOut(String txt) {
+
+		getTts().speak(txt, TextToSpeech.QUEUE_FLUSH, null);
+	}
+
+	public TextToSpeech getTts() {
+		return tts;
+	}
+
+	public void setTts(TextToSpeech tts) {
+		this.tts = tts;
+	}
+
 }

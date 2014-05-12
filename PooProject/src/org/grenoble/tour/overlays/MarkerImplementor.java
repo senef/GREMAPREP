@@ -32,6 +32,7 @@ public class MarkerImplementor implements OnMarkerClickListener {
 	@Override
 	public void onMarkerClick(Marker poi, Context ctx, MapView mv) {
 		// TODO Auto-generated method stub
+
 		Projection p = mv.getProjection();
 		GeoPoint gp = p.fromPixels(poi.getPixelX(), poi.getPixelY());
 		int duration = Toast.LENGTH_SHORT;

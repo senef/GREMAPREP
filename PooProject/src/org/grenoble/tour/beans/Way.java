@@ -34,7 +34,7 @@ import android.util.Log;
 public class Way implements Parcelable {
 	// private String id;
 	private static final String TAG = "way";
-
+	private int routeID;
 	private List<GeoPoint> noeuds;
 	private List<String> references;
 
@@ -49,10 +49,41 @@ public class Way implements Parcelable {
 
 	}
 
-	public Way() {
+	public Way(int ID) {
 		super();
+		this.routeID = ID;
 		this.noeuds = new ArrayList<GeoPoint>();
 		this.references = new ArrayList<String>();
+	}
+
+	/**
+	 * @return the routeID
+	 */
+	public int getRouteID() {
+		return routeID;
+	}
+
+	/**
+	 * @param routeID
+	 *            the routeID to set
+	 */
+	public void setRouteID(int routeID) {
+		this.routeID = routeID;
+	}
+
+	/**
+	 * @return the references
+	 */
+	public List<String> getReferences() {
+		return references;
+	}
+
+	/**
+	 * @param references
+	 *            the references to set
+	 */
+	public void setReferences(List<String> references) {
+		this.references = references;
 	}
 
 	/**

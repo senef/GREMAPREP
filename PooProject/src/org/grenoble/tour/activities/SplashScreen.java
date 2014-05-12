@@ -29,7 +29,7 @@ public class SplashScreen extends Activity {
 
 		// Animation animation;
 
-		Animation animation = AnimationUtils.loadAnimation(this, R.anim.move);
+		Animation animation = AnimationUtils.loadAnimation(this, R.anim.fadeout);
 		ImageView v = (ImageView) this.findViewById(R.id.splash);
 		animation.setDuration(5000);
 		v.startAnimation(animation);

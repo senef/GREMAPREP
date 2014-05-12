@@ -15,44 +15,51 @@
 package org.grenoble.tour.activities;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.genoble.tour.services.GPSTracker;
 import org.grenoble.tour.beans.Poi;
 import org.grenoble.tour.beans.Way;
 import org.grenoble.tour.provider.POIRetriever;
+import org.grenoble.tour.views.Boussole;
 import org.grenoble.tour.views.MapView;
+import org.grenoble.tour.views.Marker;
 import org.mapsforge.android.maps.MapActivity;
 import org.mapsforge.android.maps.overlay.ListOverlay;
-import org.mapsforge.android.maps.overlay.Marker;
 import org.mapsforge.android.maps.overlay.OverlayItem;
-import org.mapsforge.android.maps.overlay.PolygonalChain;
 import org.mapsforge.android.maps.overlay.Polyline;
 import org.mapsforge.applications.android.samples.R;
 import org.mapsforge.core.model.GeoPoint;
 import org.mapsforge.map.reader.header.FileOpenResult;
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
-import android.graphics.Paint;
+import android.graphics.Point;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
+import android.widget.ImageView;
 import android.widget.Toast;
 
-public class MapViewer extends MapActivity {
+public class MapViewer extends MapActivity implements SensorEventListener {
 	private static final File MAP_FILE = new File(Environment.getExternalStorageDirectory().getPath(),
 			"rhone-alpes.map");
 	MapView mapView;
@@ -62,18 +69,23 @@ public class MapViewer extends MapActivity {
 	private LocationManager locationManager;
 	//
 	private ListOverlay listOverlay = new ListOverlay();
+	private ImageView imageBoussole;
+	private float currentDegree = 0f;
+	private SensorManager mSensorManager;
+	private GeoPoint currentPoint;
+	ArrayList<Poi> pois = new ArrayList<Poi>();
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		// pour débogage
-		String sfile = Environment.getExternalStorageDirectory().getPath();
-		Log.d("MAPFILE", sfile);
 		// Location management
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		updateLocation(locationManager);
-		mapView = new MapView(this);
+
+		LayoutInflater factory = LayoutInflater.from(this);
+		final View aView = factory.inflate(R.layout.activity_map, null);
+		mapView = (MapView) aView.findViewById(R.id.map);
+
 		mapView.setClickable(true);
 		mapView.setBuiltInZoomControls(true);
 		FileOpenResult fileOpenResult = this.mapView.setMapFile(MAP_FILE);
@@ -81,31 +93,46 @@ public class MapViewer extends MapActivity {
 			Toast.makeText(this, fileOpenResult.getErrorMessage(), Toast.LENGTH_LONG).show();
 			finish();
 		}
-		this.mapView.showUserMarker(true);
-		setContentView(mapView);
+		setContentView(aView);
+		try {
+			set_PointsOfInterest();
+		} catch (XmlPullParserException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-		setUp_PointsOfInterest();
+		// boussole
+		imageBoussole = (ImageView) aView.findViewById(R.id.boussole_view);
+		// initialiser sensor capabilities
+		mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
 
 	}
 
 	// met les POI sur la map
-	public void setUp_PointsOfInterest() {
+	public void set_PointsOfInterest() throws XmlPullParserException {
+
 		// -----remplir listPoi
-		ArrayList<Poi> listPoi = new ArrayList<Poi>();
 		try {
 			// retrieving POI from POI.osm file
-			listPoi.addAll(POIRetriever.parsebis(this.getAssets().open("POI.osm")));
+			pois.addAll(POIRetriever.parse(getAssets().open("listeOfPoi.osm")));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 		// // ---------ajouter des marqueur---------
 
 		ListOverlay listOverlay = new ListOverlay();
 		Marker mark;
-		for (Poi p : listPoi.subList(1, 18)) {
-			mark = this.mapView.createMarker(R.drawable.marker_green, p.getNewPoint());
+		Point point = new Point();
+		/*
+		 * List<GeoPoint> lgp = new ArrayList<GeoPoint>(); for (Poi p : listPoi) { lgp.add(p.getNewPoint()); }
+		 * //this.mapView.addRoute(1, lgp, Color.RED, 18);
+		 */
+		for (Poi p : pois) {
+			mark = this.mapView.createMarker(R.drawable.marker_blue, p.getNewPoint(), p.getName(), p.getDesc());
+			mark.setId(Integer.parseInt(p.getId()));
 			this.mapView.addMarker(mark);
+			// lgp.add(p.getNewPoint());
+
 		}
 
 	}
@@ -148,17 +175,21 @@ public class MapViewer extends MapActivity {
 					// add marker
 					List<OverlayItem> overlayItems = listOverlay.getOverlayItems();
 					overlayItems.remove(myPlace);
-					myPlace = mapView.createMarker(R.drawable.marker_red, point);
+					myPlace = mapView.createMarker(R.drawable.marker_red, point, "position actuelle", "position");
 					overlayItems.add(myPlace);
 					// MapViewer.mapView.getOverlays().clear();
 					mapView.getOverlays().add(listOverlay);
 					mapView.getMapViewPosition().setCenter(point);
+					currentPoint = point;
 				}
 
 			}
 		};
+		Criteria criteria = new Criteria();
+		provi = locationManager.getBestProvider(criteria, true);
+		Log.d("LOCALISATION", provi);
 		// demander localisation
-		locationManager.requestLocationUpdates(provi, 60000, 150, lis);
+		locationManager.requestLocationUpdates(provi, 0, 0, lis);
 
 	}
 
@@ -176,41 +207,34 @@ public class MapViewer extends MapActivity {
 			e.printStackTrace();
 		}
 		Polyline polyline;
-		for (Way w : listWay.subList(1, 5)) {
+		for (Way w : listWay.subList(15, 50)) {
 			w.setNodes(this.getAssets().open("POI.osm"));
-			polyline = createPolyline(this, w.getNoeuds());
-			Toast.makeText(this, "lat=" + w.getNoeuds().get(0).latitude, Toast.LENGTH_LONG);
+			setMarkers(w.getNoeuds());
+			mapView.addRoute(w.getRouteID(), w.getNoeuds(), Color.BLUE, 18);
 
-			overlayItems.add(polyline);
 		}
 
 		// Polyline polyline = createPolyline();
 		mapView.getOverlays().add(listOverlay);
 	}
 
-	private static Polyline createPolyline(Context ctx, List<GeoPoint> geoPoints) {
-		PolygonalChain polygonalChain = new PolygonalChain(geoPoints);
-		if (polygonalChain == null) {
-			Log.i("jj", "is null");
+	public void setMarkers(List<GeoPoint> lm) {
+		Marker mark;
+		for (GeoPoint p : lm) {
+			mark = this.mapView.createMarker(R.drawable.node, p, "node", null);
+			this.mapView.addMarker(mark);
 		}
-		Toast.makeText(ctx, polygonalChain.toString() + "test", Toast.LENGTH_LONG);
-		Paint paintStroke = new Paint(Paint.ANTI_ALIAS_FLAG);
-		paintStroke.setStyle(Paint.Style.STROKE);
-		paintStroke.setColor(Color.MAGENTA);
-		paintStroke.setAlpha(128);
-		paintStroke.setStrokeWidth(7);
-		paintStroke.setPathEffect(new DashPathEffect(new float[] { 25, 15 }, 0));
-
-		return new Polyline(polygonalChain, paintStroke);
 	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.activity_main, menu);
+
 		menu.add("ListPOI");
 		menu.add("Itineraire");
 		menu.add("Settings");
 
-		return super.onCreateOptionsMenu(menu);
+		return true;
 	}
 
 	@Override
@@ -220,53 +244,98 @@ public class MapViewer extends MapActivity {
 			startActivity(intent);
 		} else if (item.getTitle().equals("Itineraire")) {
 			Toast.makeText(this, "not done", Toast.LENGTH_SHORT);
+		} else if (item.getItemId() == R.id.menu_locate) {
+			GPSTracker gps = null;
+			gps = new GPSTracker(this);
+
+			// check if GPS enabled
+			if (gps.canGetLocation()) {
+
+				double latitude = gps.getLatitude();
+				double longitude = gps.getLongitude();
+				mapView.removeMarker(myPlace);
+				myPlace = mapView.createMarker(R.drawable.marker_red, new GeoPoint(latitude, longitude),
+						"position actuelle", "position");
+
+				mapView.addMarker(myPlace);
+				mapView.showUserMarker(true);
+				mapView.getMapViewPosition().setCenter(new GeoPoint(latitude, longitude));
+
+			} else {
+				Toast.makeText(this, "position inconnue...", Toast.LENGTH_SHORT).show();
+			}
 		} else {
-			Intent intent = new Intent(this, PoisActivity.class);
+			Intent intent = new Intent(this, POISActivity.class);
 			startActivity(intent);
 		}
 
 		return true;
 	}
 
-	public void installMapIntoSD() {
-		AssetManager assetManager = getAssets();
-		String[] files = null;
-		try {
-			files = assetManager.list("Files");
-		} catch (IOException e) {
-			Log.e("tag", e.getMessage());
-		}
-
-		for (String filename : files) {
-			System.out.println("File name => " + filename);
-			InputStream in = null;
-			OutputStream out = null;
-			System.out.println(filename);
-			try {
-				in = assetManager.open("Files/" + filename); // if files resides inside the "Files" directory itself
-				out = new FileOutputStream(Environment.getExternalStorageDirectory().getPath() + "/" + filename);
-				copyFile(in, out);
-				in.close();
-				in = null;
-				out.flush();
-				out.close();
-				out = null;
-			} catch (Exception e) {
-				Log.e("tag", e.getMessage());
-			}
+	/*
+	 * (non-Javadoc)
+	 * @see org.mapsforge.android.maps.MapActivity#onPause()
+	 */
+	@Override
+	protected void onPause() {
+		super.onPause();
+		mSensorManager.unregisterListener(this);
+		if (mapView.getTts() != null) {
+			mapView.getTts().stop();
+			mapView.getTts().shutdown();
 		}
 	}
 
-	public void removeFromApp() {
+	/*
+	 * (non-Javadoc)
+	 * @see org.mapsforge.android.maps.MapActivity#onResume()
+	 */
+	@Override
+	protected void onResume() {
+		super.onResume();
+
+		mSensorManager.registerListener(this, mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+				SensorManager.SENSOR_DELAY_GAME);
+	}
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		// get the angle around the z-axis rotated
+
+		float degree = Math.round(event.values[0]);
+		RotateAnimation ra = new RotateAnimation(currentDegree, -degree, Animation.RELATIVE_TO_SELF, 0.5f,
+				Animation.RELATIVE_TO_SELF, 0.5f);
+		ra.setDuration(210);
+		// set the animation after the end of the reservation status
+		ra.setFillAfter(true);
+		// Start the animation
+		imageBoussole.startAnimation(ra);
+		currentDegree = -degree;
+	}
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO Auto-generated method stub
 
 	}
 
-	private void copyFile(InputStream in, OutputStream out) throws IOException {
-		byte[] buffer = new byte[1024];
-		int read;
-		while ((read = in.read(buffer)) != -1) {
-			out.write(buffer, 0, read);
-		}
+	public void showBoussole(View v) {
+
+		Intent i = new Intent(this, Boussole.class);
+		this.startActivity(i);
+	}
+
+	public void showListOfPOI(View v) throws InterruptedException {
+		/*
+		 * Animation animRotate = AnimationUtils.loadAnimation(this, R.anim.translate); v.startAnimation(animRotate);
+		 */
+
+		Intent i = new Intent(this, POISActivity.class);
+
+		i.putParcelableArrayListExtra("pois", pois);
+		Log.d("tgh", "" + pois.size());
+		this.startActivity(i);
+
 	}
 
 }
